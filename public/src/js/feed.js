@@ -4,6 +4,9 @@ var closeCreatePostModalButton = document.querySelector(
   "#close-create-post-modal-btn"
 );
 var sharedMomentsArea = document.querySelector("#shared-moments");
+var form = document.querySelector('form')
+var titleInput = document.querySelector('#title')
+var locationInput = document.querySelector('#location')
 
 function openCreatePostModal() {
   createPostArea.style.display = "block";
@@ -110,22 +113,40 @@ fetch(url)
     updateUI(dataArray);
   });
 
-if ("caches" in window) {
-  caches
-    .match(url)
-    .then(function(response) {
-      if (response) {
-        return response.json();
+if ("indexedDB" in window) {
+  readAllData('posts')
+    .then(function(data){
+      if(!networkDataReceived){
+        console.log('from cache', data)
+        updateUI(data);
       }
     })
-    .then(function(data) {
-      console.log("From cache", data);
-      if (!networkDataReceived) {
-        var dataArray = [];
-        for (var key in data) {
-          dataArray.push(data[key]);
-        }
-        updateUI(dataArray);
-      }
-    });
 }
+
+form.addEventListener('submit', function(e){
+  e.preventDefault();
+  if(titleInput.value.trim() === '' || locationInput.value.trim() === ''){
+    alert('please enter valid data')
+    return;
+  }
+  closeCreatePostModal(); 
+  if('serviceWorker' in navigator && 'SyncManager' in window){
+    navigator.serviceWorker.ready
+      .then(function(sw){
+        var post = {
+          id: new Date().toISOString(),
+          title: titleInput.value, 
+          location: locationInput.value
+        };
+        writeData('sync-posts', post)
+          .then(function(){
+             sw.sync.register("sync-new-post");
+          })
+          .then(function(){
+            var snackbarContainer = document.querySelector('#confirmation-toast')
+            var data = {message: 'Your post was saved for syncing'}
+            snackbarContainer.MaterialSnackbar.showSnackbar(data)
+          })
+      });
+  }
+})
