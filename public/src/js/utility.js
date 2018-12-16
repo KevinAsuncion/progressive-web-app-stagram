@@ -9,7 +9,7 @@ var dbPromise = idb.open("posts-store", 1, function(db) {
 
 function writeData(st, data) {
   return dbPromise.then(function(db) {
-    var tx = db.transsaction(st, "readwrite");
+    var tx = db.transaction(st, "readwrite");
     var store = tx.objectStore(st);
     store.put(data);
     return tx.complete;
@@ -18,7 +18,7 @@ function writeData(st, data) {
 
 function readAllData(st) {
   return dbPromise.then(function(db) {
-    var tx = db.transsaction(st, "readonly");
+    var tx = db.transaction(st, "readonly");
     var store = tx.objectStore(st);
     return store.getAll();
   });
@@ -26,7 +26,7 @@ function readAllData(st) {
 
 function clearAllData(st) {
   return dbPromise.then(function(db) {
-    var tx = db.transsaction(st, "readwrite");
+    var tx = db.transaction(st, "readwrite");
     var store = tx.objectStore(st);
     store.clear();
     return tx.complete;
@@ -34,13 +34,14 @@ function clearAllData(st) {
 }
 
 function deleteItemFromData(st, id) {
-  dbPromise.then(function(db) {
-    var tx = db.transaction(st, "readwrite");
-    var store = tx.objectStore(st);
-    store.delete(id);
-    return tx.complete
-  })
-  .then(function(){
-      console.log('item deleted')
-  })
+  dbPromise
+    .then(function(db) {
+      var tx = db.transaction(st, "readwrite");
+      var store = tx.objectStore(st);
+      store.delete(id);
+      return tx.complete;
+    })
+    .then(function() {
+      console.log("Item deleted!");
+    });
 }
